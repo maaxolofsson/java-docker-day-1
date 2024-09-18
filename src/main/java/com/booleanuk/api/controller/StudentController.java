@@ -2,8 +2,13 @@ package com.booleanuk.api.controller;
 
 import com.booleanuk.api.model.Student;
 import com.booleanuk.api.repository.StudentRepository;
+import com.booleanuk.api.responses.ErrorResponse;
+import com.booleanuk.api.responses.Response;
+import com.booleanuk.api.responses.StudentListResponse;
+import com.booleanuk.api.responses.StudentResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -17,44 +22,65 @@ public class StudentController {
     private StudentRepository students;
 
     @GetMapping
-    public List<Student> getAll() {
-        return this.students.findAll();
+    public ResponseEntity<StudentListResponse> getAll() {
+        StudentListResponse studentListResponse = new StudentListResponse();
+        studentListResponse.set(this.students.findAll());
+        return new ResponseEntity<>(studentListResponse, HttpStatus.OK);
     }
 
     @GetMapping("{id}")
-    public Student getOne(@PathVariable int id) {
+    public ResponseEntity<Response<?>> getOne(@PathVariable int id) {
         Student toReturn = this.students.findById(id).orElse(null);
-        if (toReturn == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        return toReturn;
+        if (toReturn == null) {
+            ErrorResponse errorResponse = new ErrorResponse("not found");
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        }
+        StudentResponse studentResponse = new StudentResponse();
+        studentResponse.set(toReturn);
+        return new ResponseEntity<>(studentResponse, HttpStatus.OK);
     }
 
     @PostMapping
-    public Student create(@RequestBody Student toAdd) {
-        return this.students.save(toAdd);
+    public ResponseEntity<StudentResponse> create(@RequestBody Student toAdd) {
+        StudentResponse studentResponse = new StudentResponse();
+        studentResponse.set(this.students.save(toAdd));
+        return new ResponseEntity<>(studentResponse, HttpStatus.CREATED);
     }
 
     @DeleteMapping("{id}")
-    public Student delete(@PathVariable int id) {
+    public ResponseEntity<Response<?>> delete(@PathVariable int id) {
         Student toDelete = this.students.findById(id).orElse(null);
-        if (toDelete == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+
+        if (toDelete == null) {
+            ErrorResponse errorResponse = new ErrorResponse("not found");
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        }
+
         this.students.delete(toDelete);
-        return toDelete;
+
+        StudentResponse studentResponse = new StudentResponse();
+        studentResponse.set(toDelete);
+
+        return new ResponseEntity<>(studentResponse, HttpStatus.OK);
     }
 
     @PutMapping("{id}")
-    public Student update(@PathVariable int id, @RequestBody Student newData) {
+    public ResponseEntity<Response<?>> update(@PathVariable int id, @RequestBody Student newData) {
         Student toUpdate = this.students.findById(id).orElse(null);
-        if (toUpdate == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+
+        if (toUpdate == null) {
+            ErrorResponse errorResponse = new ErrorResponse("not found");
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        }
 
         toUpdate.setDob(newData.getDob());
         toUpdate.setAverageGrade(newData.getAverageGrade());
         toUpdate.setFirstName(newData.getFirstName());
         toUpdate.setLastName(newData.getLastName());
-        toUpdate.setCourseTitle(newData.getCourseTitle());
-        toUpdate.setCourseStartDate(newData.getCourseStartDate());
 
-        this.students.save(toUpdate);
+        StudentResponse studentResponse = new StudentResponse();
+        studentResponse.set(this.students.save(toUpdate));
 
-        return toUpdate;
+        return new ResponseEntity<>(studentResponse, HttpStatus.CREATED);
     }
 }
