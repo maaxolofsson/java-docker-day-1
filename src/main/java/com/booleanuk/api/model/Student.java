@@ -28,16 +28,10 @@ public class Student {
     private String dob;
 
     @Column
-    private String courseTitle;
-
-    @Column
-    private String courseStartDate;
-
-    @Column
     private double averageGrade;
 
     public Student(int id) {
         this.id = id;
     }
-    
+
 }
